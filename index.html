@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SecretNote</title>
+
+  <!-- Handwriting Google Font -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: pink;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      transition: background-color 1s ease;
+      position: relative;
+    }
+    #container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    img,
+    video {
+      max-width: 300px;
+      cursor: pointer;
+    }
+
+    /* Valentine Box styling */
+    #valentine-box {
+      display: none;
+      background: url('paper-image.jpg') no-repeat center center;
+      background-size: cover;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      width: 80%;
+      height: 80%;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #valentine-box p {
+      font-family: 'Dancing Script', cursive;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #4b2c20;
+    }
+    #valentine-box label {
+      display: flex;
+      align-items: center;
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.5rem;
+      margin: 0.5rem;
+      color: #4b2c20;
+      cursor: pointer;
+      transition: transform 1s ease; /* for No to fall off screen */
+    }
+    #valentine-box input[type="checkbox"] {
+      width: 1.5em;
+      height: 1.5em;
+      margin-right: 0.5em;
+      accent-color: #e53981; /* pinkish accent for checkboxes */
+      cursor: pointer;
+    }
+
+    /* Floating hearts animation */
+    @keyframes floatHearts {
+      0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-200px) scale(0.5);
+        opacity: 1;
+      }
+    }
+    .heart {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background: url('heart.png') no-repeat center center;
+      background-size: contain;
+      animation: floatHearts 2s linear forwards;
+      pointer-events: none; /* let clicks pass through hearts */
+    }
+
+    /* Class to make 'No' label fall off the screen */
+    .fall-off {
+      transform: translateY(500px) rotate(60deg);
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Container for GIFs/Videos -->
+  <div id="container">
+    <!-- Pet Dog GIF -->
+    <img id="dogGif" src="pet-dog.gif" alt="Pet Dog Gif" />
+  </div>
+
+  <!-- Valentine Message -->
+  <div id="valentine-box">
+    <p>Will you be my Valentine?</p>
+    <label id="yesLabel"
+      ><input type="checkbox" id="yesCheck" /> Yes</label
+    >
+    <label id="noLabel"
+      ><input type="checkbox" id="noCheck" /> No</label
+    >
+  </div>
+
+  <script>
+    /*
+      We'll place hearts in a row, ensuring no overlap:
+      1) Decide how many hearts we want in a row.
+      2) Space them evenly across the width.
+    */
+  
+    let stage = 0;
+    const container = document.getElementById('container');
+    const dogGif = document.getElementById('dogGif');
+    const valentineBox = document.getElementById('valentine-box');
+    const yesCheck = document.getElementById('yesCheck');
+    const noCheck = document.getElementById('noCheck');
+    const yesLabel = document.getElementById('yesLabel');
+    const noLabel = document.getElementById('noLabel');
+  
+    // 1) Pet Dog => Heart Dog on mouseup
+    dogGif.addEventListener('mouseup', () => {
+      if (stage === 0) {
+        dogGif.src = 'heart-dog.gif';
+        stage = 1;
+        setTimeout(() => {
+          document.body.style.backgroundColor = 'white';
+          dogGif.remove();
+  
+          const notesVideo = document.createElement('video');
+          notesVideo.id = 'notesVideo';
+          notesVideo.src = 'notes-dog.mp4';
+          notesVideo.autoplay = true;
+          notesVideo.muted = true;
+          notesVideo.playsInline = true;
+          container.appendChild(notesVideo);
+  
+          stage = 2;
+  
+          notesVideo.addEventListener('ended', () => {
+            notesVideo.pause();
+            notesVideo.currentTime = notesVideo.duration;
+          });
+  
+          notesVideo.addEventListener('click', () => {
+            if (
+              stage === 2 &&
+              Math.abs(notesVideo.currentTime - notesVideo.duration) < 0.01
+            ) {
+              notesVideo.style.display = 'none';
+              valentineBox.style.display = 'flex';
+            }
+          });
+        }, 3000);
+      }
+    });
+  
+    // If user checks Yes => show hearts in a row
+    yesCheck.addEventListener('change', () => {
+      if (yesCheck.checked) {
+        spawnHeartsInRow(10);
+      }
+    });
+  
+    // If user checks No => label falls off screen
+    noCheck.addEventListener('change', () => {
+      if (noCheck.checked) {
+        noLabel.classList.add('fall-off');
+      }
+    });
+  
+    // Place hearts in a neat row
+    function spawnHeartsInRow(count) {
+      const screenWidth = window.innerWidth;
+      const heartWidth = 100; // matches .heart { width: 100px; }
+      const totalWidthForHearts = count * heartWidth;
+      // If total hearts exceed screenWidth, reduce count
+      if (totalWidthForHearts > screenWidth) {
+        count = Math.floor(screenWidth / heartWidth);
+      }
+  
+      // Calculate spacing
+      const margin = (screenWidth - (count * heartWidth)) / (count + 1);
+  
+      for (let i = 0; i < count; i++) {
+        const heart = document.createElement('div');
+        heart.classList.add('heart');
+  
+        // Place hearts in distinct columns
+        // left = margin + i*(heartWidth + margin)
+        const leftPos = margin + i * (heartWidth + margin);
+  
+        heart.style.left = leftPos + 'px';
+        heart.style.bottom = '20px';
+  
+        // small random delay
+        const randomDelay = Math.random() * 0.5;
+        heart.style.animationDelay = randomDelay + 's';
+  
+        document.body.appendChild(heart);
+  
+        heart.addEventListener('animationend', () => {
+          heart.remove();
+        });
+      }
+    }
+  </script>
+</body>
+</html>
